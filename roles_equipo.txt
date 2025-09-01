@@ -1,0 +1,7 @@
+ Página Web con contenido sobre Relaciones de Familia
+
+- Tiago: Diseñador UI/UX
+- Dante: Contenidista
+- Jere: Desarrollador de Chatbot
+- Lautaro: Programador Backend
+- Nicolás: Programador Frontend
