@@ -1,28 +1,23 @@
+# Define los servicios de base de datos primero
+databases:
+  - name: db-relaciones-familia
+    plan: free
+
+# Define los servicios de aplicación después
 services:
-  # Define el Servicio Web (tu aplicación Laravel)
   - type: web
-    name: relaciones-familia
-    env: php
+    name: web-relaciones-familia
     plan: free
     branch: master
+    # No se especifica 'runtime' o 'env' para PHP, Render lo auto-detecta con composer.json
     buildCommand: "./build.sh"
     startCommand: "vendor/bin/heroku-php-apache2 public/"
     envVars:
       - key: APP_KEY
-        generateValue: true
-      - key: APP_URL
-        fromService:
-          type: web
-          name: relaciones-familia
-          property: url
+        generateValue: true # Render generará una clave segura
+      - key: DB_CONNECTION
+        value: pgsql
       - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: db-relaciones-familia
+        fromDatabase:
+          name: db-relaciones-familia # Se conecta a la base de datos definida arriba
           property: connectionString
-
-  # Define la Base de Datos
-  - type: pserv
-    name: db-relaciones-familia
-    env: postgres
-    plan: free
