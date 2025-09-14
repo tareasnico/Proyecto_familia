@@ -1,7 +1,7 @@
 services:
   - type: web
     name: web-relaciones-familia
-    runtime: php # <-- CORRECCIÓN 1
+    # La línea 'runtime: php' ha sido eliminada para permitir la auto-detección.
     branch: master
     plan: free
     buildCommand: "./build.sh"
@@ -20,7 +20,7 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: db-relaciones-familia
-          property: connectionString # <-- CORRECCIÓN 2
+          property: connectionString
 
 databases:
   - name: db-relaciones-familia
