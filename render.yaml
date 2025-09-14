@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: web-relaciones-familia
+    env: php
+    branch: master
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "vendor/bin/heroku-php-apache2 public/"
+    envVars:
+      - key: APP_URL
+        value: https://web-relaciones-familia.onrender.com
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: db-relaciones-familia
+          property: internalConnectionString
+
+databases:
+  - name: db-relaciones-familia
+    plan: free
