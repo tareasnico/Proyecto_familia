@@ -1,27 +1,28 @@
 services:
+  # Define el Servicio Web (tu aplicación Laravel)
   - type: web
-    name: web-relaciones-familia
-    # La línea 'runtime: php' ha sido eliminada para permitir la auto-detección.
-    branch: master
+    name: relaciones-familia
+    env: php
     plan: free
+    branch: master
     buildCommand: "./build.sh"
     startCommand: "vendor/bin/heroku-php-apache2 public/"
     envVars:
-      - key: APP_URL
-        value: https://web-relaciones-familia.onrender.com
       - key: APP_KEY
         generateValue: true
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: false
-      - key: DB_CONNECTION
-        value: pgsql
+      - key: APP_URL
+        fromService:
+          type: web
+          name: relaciones-familia
+          property: url
       - key: DATABASE_URL
-        fromDatabase:
+        fromService:
+          type: pserv
           name: db-relaciones-familia
           property: connectionString
 
-databases:
-  - name: db-relaciones-familia
+  # Define la Base de Datos
+  - type: pserv
+    name: db-relaciones-familia
+    env: postgres
     plan: free
