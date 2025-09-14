@@ -1,11 +1,15 @@
 services:
   - type: web
     name: web-relaciones-familia
-    env: php
     plan: free
     branch: master
     buildCommand: "composer install --no-dev && npm install && npm run build && php artisan key:generate --force && php artisan migrate --force"
     startCommand: "vendor/bin/heroku-php-apache2 public/"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: db-relaciones-familia
+          property: connectionString
 
 databases:
   - name: db-relaciones-familia
