@@ -4,5 +4,5 @@
 - Tiago: Diseñador UI/UX
 - Dante: Contenidista
 - Jere: Desarrollador de Chatbot
-- Lautaro: Programador Backend
-- Nicolás: Programador Frontend
+- Lautaro: Contenidista
+- Nicolás: Programador Frontend y backend
