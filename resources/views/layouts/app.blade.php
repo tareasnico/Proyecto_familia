@@ -20,7 +20,7 @@
             --custom-light-bg: #f5f5ff;
         }
         body { 
-            padding-top: 70px; /* Importante: espacio para el navbar fijo */
+            padding-top: 70px; 
             background-color: #f8f9fa; 
             font-family: 'Montserrat', sans-serif; 
             display: flex;
@@ -28,13 +28,13 @@
             min-height: 100vh;
         }
         main {
-            flex-grow: 1; /* Empuja el footer hacia abajo */
+            flex-grow: 1; 
         }
         h1, h2, h3, h4, h5, h6, .btn { 
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
         }
-        /* Estilos de tu Barra de Navegación */
+      
         .navbar-dark .navbar-nav .nav-link {
             color: rgba(255, 255, 255, 0.85);
             font-weight: 400;
@@ -135,18 +135,152 @@
             </div>
     </div>
     
-    <script>
-        // Lógica del Chatbot (simplificada)
-        document.addEventListener('DOMContentLoaded', () => {
-            const chatbotToggler = document.querySelector('.chatbot-toggler');
-            const chatbotContainer = document.querySelector('.chatbot-container');
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatbotToggler = document.querySelector('.chatbot-toggler');
+        const chatbotContainer = document.querySelector('.chatbot-container');
+        const chatMessages = document.querySelector('.chat-messages');
+        const chatOptions = document.querySelector('.chat-options');
+
+        let chatbotData = {}; 
+        const welcomeMessage = "¡Hola! Soy tu asistente virtual. Elige una categoría para ver las preguntas frecuentes.";
+
+
+        async function fetchChatbotData() {
+            try {
+                const response = await fetch(`{{ route('api.chatbot.preguntas') }}`);
+                if (!response.ok) {
+                    throw new Error('No se pudieron cargar los datos del chatbot.');
+                }
+                chatbotData = await response.json();
+                showWelcomeMessage();
+            } catch (error) {
+                console.error(error);
+                appendBotMessage("Lo siento, no estoy disponible en este momento.");
+            }
+        }
+
+        function appendBotMessage(message) {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('message', 'bot-message');
+            messageEl.innerHTML = `<p>${message}</p>`;
+            chatMessages.appendChild(messageEl);
+            scrollToBottom();
+        }
+
+        function appendUserMessage(message) {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('message', 'user-message');
+            messageEl.innerHTML = `<p>${message}</p>`;
+            chatMessages.appendChild(messageEl);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        
+        function clearOptions() {
+            chatOptions.innerHTML = '';
+        }
+
+        function showWelcomeMessage() {
+            clearOptions();
+            appendBotMessage(welcomeMessage);
             
-            chatbotToggler.addEventListener('click', () => {
-                chatbotContainer.classList.toggle('show');
+            const categories = Object.keys(chatbotData);
+            categories.forEach(category => {
+                if (category !== 'Organismos') {
+                    const button = createOptionButton(category, () => showQuestionsForCategory(category));
+                    chatOptions.appendChild(button);
+                }
             });
-            // Aquí iría toda tu lógica completa del chatbot
+
+            const infoButton = createOptionButton(
+                '<i class="bi bi-box-arrow-up-right"></i> ¿Dónde puedo encontrar más información?', 
+                () => showSpecialInfo()
+            );
+            infoButton.classList.add('btn-outline-secondary');
+            chatOptions.appendChild(infoButton);
+        }
+
+        function showQuestionsForCategory(category) {
+            clearOptions();
+            appendUserMessage(category);
+            appendBotMessage(`Aquí tienes las preguntas sobre ${category}:`);
+
+            const questions = chatbotData[category];
+            questions.forEach(qa => {
+                const button = createOptionButton(qa.question, () => showAnswer(qa));
+                chatOptions.appendChild(button);
+            });
+
+            const backButton = createOptionButton('<< Volver al inicio', showWelcomeMessage);
+            chatOptions.appendChild(backButton);
+        }
+
+
+        function showAnswer(qa) {
+            clearOptions();
+            appendUserMessage(qa.question);
+            appendBotMessage(qa.answer);
+
+            const backToQuestionsButton = createOptionButton(
+                `< Volver a "${qa.category}"`, 
+                () => showQuestionsForCategory(qa.category) 
+            );
+            chatOptions.appendChild(backToQuestionsButton);
+
+            const backToHomeButton = createOptionButton(
+                '<< Volver al inicio', 
+                showWelcomeMessage
+            );
+            chatOptions.appendChild(backToHomeButton);
+        }
+        
+        function showSpecialInfo() {
+            const registroCivil = chatbotData['Organismos']?.find(q => q.question.includes('Registro Civil'))?.answer || '';
+            const dnrua = chatbotData['Organismos']?.find(q => q.question.includes('DNRUA'))?.answer || '';
+            
+            const specialAnswer = `
+                <p>¡Claro! Aquí tienes información sobre organismos oficiales:</p>
+                <strong style="font-family: 'Montserrat', sans-serif;">Registro Civil:</strong>
+                <p style="font-size: 0.9rem;">${registroCivil}</p>
+                <strong style="font-family: 'Montserrat', sans-serif;">DNRUA:</strong>
+                <p style="font-size: 0.9rem;">${dnrua}</p>
+                <hr>
+                <p>Para más detalles, visita los sitios oficiales:</p>
+                <ul>
+                    <li><a href="https://www.argentina.gob.ar/interior/renaper" target="_blank" rel="noopener noreferrer">RENAPER (Registro Civil)</a></li>
+                    <li><a href="https://www.argentina.gob.ar/justicia/adopcion" target="_blank" rel="noopener noreferrer">DNRUA (Adopción)</a></li>
+                </ul>
+            `;
+            
+            clearOptions();
+            appendUserMessage("¿Dónde puedo encontrar más información?");
+            appendBotMessage(specialAnswer);
+            
+            const backButton = createOptionButton('<< Volver al inicio', showWelcomeMessage);
+            chatOptions.appendChild(backButton);
+        }
+
+        function createOptionButton(text, onClick) {
+            const button = document.createElement('button');
+            button.classList.add('btn', 'btn-outline-primary', 'w-100');
+            button.innerHTML = text;
+            button.addEventListener('click', onClick);
+            return button;
+        }
+
+        chatbotToggler.addEventListener('click', () => {
+            chatbotContainer.classList.toggle('show');
+            if (chatbotContainer.classList.contains('show') && chatMessages.childElementCount === 0) {
+                fetchChatbotData();
+            }
         });
-    </script>
+    });
+</script>
 
 </body>
 </html>

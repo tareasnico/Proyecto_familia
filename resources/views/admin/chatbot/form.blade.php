@@ -1,32 +1,44 @@
-<div class="p-6 bg-white border-b border-gray-200">
-    @if($errors->any())
-        <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
-            <strong>¡Ups! Hubo algunos problemas:</strong>
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="mb-4">
-        <label for="category" class="block text-sm font-medium text-gray-700">Categoría</label>
-        <input type="text" name="category" id="category" value="{{ old('category', $qa->category ?? '') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+@if($errors->any())
+    <div class="alert alert-danger">
+        <strong>¡Ups! Hubo algunos problemas:</strong>
+        <ul class="mt-2 mb-0">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
     </div>
+@endif
 
-    <div class="mb-4">
-        <label for="question" class="block text-sm font-medium text-gray-700">Pregunta</label>
-        <textarea name="question" id="question" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>{{ old('question', $qa->question ?? '') }}</textarea>
-    </div>
+<div class="mb-3">
+    <label for="category" class="form-label">Categoría</label>
+    <select name="category" id="category" class="form-select" required>
+        <option value="">-- Seleccione una categoría --</option>
+        
+        @foreach($categorias as $categoria)
+            <option value="{{ $categoria }}" {{ old('category', $qa->category ?? '') == $categoria ? 'selected' : '' }}>
+                {{ $categoria }}
+            </option>
+        @endforeach
+    </select>
+</div>
 
-    <div class="mb-4">
-        <label for="answer" class="block text-sm font-medium text-gray-700">Respuesta</label>
-        <textarea name="answer" id="answer" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>{{ old('answer', $qa->answer ?? '') }}</textarea>
-    </div>
+<div class="mb-3">
+    <label for="question" class="form-label">Pregunta</label>
+    <textarea name="question" id="question" rows="3" 
+              class="form-control" required>{{ old('question', $qa->question ?? '') }}</textarea>
+</div>
 
-    <div class="flex justify-end pt-4">
-        <a href="{{ route('admin.chatbot.index') }}" class="px-4 py-2 bg-gray-300 text-black rounded-md mr-2 hover:bg-gray-400">Cancelar</a>
-        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Guardar</D>
-    </div>
+<div class="mb-3">
+    <label for="answer" class="form-label">Respuesta</label>
+    <textarea name="answer" id="answer" rows="6" 
+              class="form-control" required>{{ old('answer', $qa->answer ?? '') }}</textarea>
+</div>
+
+<div class="d-flex justify-content-end gap-2 pt-3 border-top">
+    <a href="{{ route('admin.chatbot.index') }}" class="btn btn-secondary">
+        Cancelar
+    </a>
+    <button type="submit" class="btn btn-success">
+        Guardar
+    </button>
 </div>

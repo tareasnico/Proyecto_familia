@@ -1,58 +1,72 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('content')
-<div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6 bg-white border-b border-gray-200">
-                
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-bold">Control del Chatbot</h1>
-                    <a href="{{ route('admin.chatbot.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                        Añadir Pregunta
-                    </a>
-                </div>
-
-                @if(session('success'))
-                    <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pregunta</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse($qas as $qa)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">{{ $qa->category }}</td>
-                                    <td class="px-6 py-4">{{ Str::limit($qa->question, 60) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="{{ route('admin.chatbot.edit', $qa) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Editar</a>
-                                        <form action="{{ route('admin.chatbot.destroy', $qa) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Seguro que quieres eliminar esta pregunta?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">Eliminar</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="px-6 py-4 text-center text-gray-500">No hay preguntas creadas todavía.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-        </div>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold" style="color: #4a2472;">
+            <i class="bi bi-robot"></i> Administrar Chatbot
+        </h2>
+        <a href="{{ route('admin.chatbot.create') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nueva pregunta
+        </a>
     </div>
+
+    {{-- Filtro por categoría --}}
+    <form method="GET" class="mb-4">
+        <div class="d-flex align-items-center gap-2">
+            <select name="categoria_filtro" class="form-select w-auto">
+                <option value="">-- Ver todas las categorías --</option>
+                @foreach($categorias as $categoria)
+                    <option value="{{ $categoria }}" {{ $categoriaSeleccionada == $categoria ? 'selected' : '' }}>
+                        {{ $categoria }}
+                    </option>
+                @endforeach
+            </select>
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-filter"></i> Filtrar
+            </button>
+        </div>
+    </form>
+
+    @if(session('success'))
+        <div class="alert alert-success shadow-sm">{{ session('success') }}</div>
+    @endif
+
+    @if($qas->isEmpty())
+        <div class="alert alert-info text-center py-4">
+            No hay preguntas registradas en esta categoría 🤖<br>
+            ¡Agregá una nueva desde el botón verde arriba!
+        </div>
+    @else
+        <div class="row g-4">
+            @foreach($qas as $qa)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-dark fw-bold">{{ $qa->question }}</h5>
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-tag"></i> {{ $qa->category }}
+                            </p>
+                            <p class="flex-grow-1" style="font-size: 0.9rem;">{{ Str::limit($qa->answer, 150) }}</p>
+
+                            <div class="d-flex justify-content-between mt-3">
+                                <a href="{{ route('admin.chatbot.edit', $qa) }}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-pencil-square"></i> Editar
+                                </a>
+
+                                <form action="{{ route('admin.chatbot.destroy', $qa) }}" method="POST" onsubmit="return confirm('¿Seguro que querés eliminar esta pregunta?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 </div>
 @endsection
