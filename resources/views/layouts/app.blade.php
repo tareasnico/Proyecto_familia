@@ -142,36 +142,37 @@
         const chatMessages = document.querySelector('.chat-messages');
         const chatOptions = document.querySelector('.chat-options');
 
-        let chatbotData = {}; 
+        let chatbotData = {};
         const welcomeMessage = "¡Hola! Soy tu asistente virtual. Elige una categoría para ver las preguntas frecuentes.";
 
-
+        // --- 1. Cargar Datos ---
         async function fetchChatbotData() {
             try {
                 const response = await fetch(`{{ route('api.chatbot.preguntas') }}`);
-                if (!response.ok) {
-                    throw new Error('No se pudieron cargar los datos del chatbot.');
-                }
+                if (!response.ok) throw new Error('Error de red');
                 chatbotData = await response.json();
-                showWelcomeMessage();
+                showInitialGreeting();
+                showCategories();
             } catch (error) {
-                console.error(error);
-                appendBotMessage("Lo siento, no estoy disponible en este momento.");
+                console.error("Error al cargar datos del chatbot:", error);
+                appendBotMessage("<p>Lo siento, no estoy disponible en este momento.</p>");
             }
         }
 
-        function appendBotMessage(message) {
+        // --- 2. Funciones de Mensajería (CORREGIDAS) ---
+        function appendBotMessage(htmlContent) {
             const messageEl = document.createElement('div');
             messageEl.classList.add('message', 'bot-message');
-            messageEl.innerHTML = `<p>${message}</p>`;
+            // AHORA INYECTA EL HTML DIRECTAMENTE, SIN ENVOLVERLO EN OTRO <p>
+            messageEl.innerHTML = htmlContent;
             chatMessages.appendChild(messageEl);
             scrollToBottom();
         }
 
-        function appendUserMessage(message) {
+        function appendUserMessage(text) {
             const messageEl = document.createElement('div');
             messageEl.classList.add('message', 'user-message');
-            messageEl.innerHTML = `<p>${message}</p>`;
+            messageEl.innerHTML = `<p>${text}</p>`;
             chatMessages.appendChild(messageEl);
             scrollToBottom();
         }
@@ -180,15 +181,18 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        
+        // --- 3. Lógica de la Interfaz ---
         function clearOptions() {
             chatOptions.innerHTML = '';
         }
 
-        function showWelcomeMessage() {
+        function showInitialGreeting() {
+            chatMessages.innerHTML = '';
+            appendBotMessage(`<p>${welcomeMessage}</p>`);
+        }
+
+        function showCategories() {
             clearOptions();
-            appendBotMessage(welcomeMessage);
-            
             const categories = Object.keys(chatbotData);
             categories.forEach(category => {
                 if (category !== 'Organismos') {
@@ -198,7 +202,7 @@
             });
 
             const infoButton = createOptionButton(
-                '<i class="bi bi-box-arrow-up-right"></i> ¿Dónde puedo encontrar más información?', 
+                '<i class="bi bi-box-arrow-up-right"></i> ¿Dónde puedo encontrar más información?',
                 () => showSpecialInfo()
             );
             infoButton.classList.add('btn-outline-secondary');
@@ -208,7 +212,7 @@
         function showQuestionsForCategory(category) {
             clearOptions();
             appendUserMessage(category);
-            appendBotMessage(`Aquí tienes las preguntas sobre ${category}:`);
+            appendBotMessage(`<p>Aquí tienes las preguntas sobre ${category}:</p>`);
 
             const questions = chatbotData[category];
             questions.forEach(qa => {
@@ -216,52 +220,73 @@
                 chatOptions.appendChild(button);
             });
 
-            const backButton = createOptionButton('<< Volver al inicio', showWelcomeMessage);
+            const backButton = createOptionButton('<< Volver al inicio', () => {
+                showInitialGreeting();
+                showCategories();
+            });
             chatOptions.appendChild(backButton);
         }
-
 
         function showAnswer(qa) {
             clearOptions();
             appendUserMessage(qa.question);
-            appendBotMessage(qa.answer);
+            // LA RESPUESTA DE LA BD PUEDE CONTENER HTML, ASÍ QUE LA PASAMOS DIRECTO
+            appendBotMessage(`<p>${qa.answer}</p>`);
 
-            const backToQuestionsButton = createOptionButton(
-                `< Volver a "${qa.category}"`, 
-                () => showQuestionsForCategory(qa.category) 
-            );
-            chatOptions.appendChild(backToQuestionsButton);
+            appendBotMessage(`<p>¿Quieres ver otras preguntas sobre "${qa.category}"?</p>`);
 
-            const backToHomeButton = createOptionButton(
-                '<< Volver al inicio', 
-                showWelcomeMessage
-            );
+            const otherQuestions = chatbotData[qa.category].filter(item => item.question !== qa.question);
+
+            if (otherQuestions.length > 0) {
+                otherQuestions.forEach(otherQa => {
+                    const button = createOptionButton(otherQa.question, () => showAnswer(otherQa));
+                    chatOptions.appendChild(button);
+                });
+            } else {
+                appendBotMessage(`<p>No hay más preguntas en esta categoría.</p>`);
+            }
+
+            const backToHomeButton = createOptionButton('<< Volver al inicio', () => {
+                showInitialGreeting();
+                showCategories();
+            });
             chatOptions.appendChild(backToHomeButton);
         }
         
+        // CORREGIDO: El HTML de esta respuesta ahora funciona con la nueva `appendBotMessage`
         function showSpecialInfo() {
-            const registroCivil = chatbotData['Organismos']?.find(q => q.question.includes('Registro Civil'))?.answer || '';
-            const dnrua = chatbotData['Organismos']?.find(q => q.question.includes('DNRUA'))?.answer || '';
-            
-            const specialAnswer = `
-                <p>¡Claro! Aquí tienes información sobre organismos oficiales:</p>
-                <strong style="font-family: 'Montserrat', sans-serif;">Registro Civil:</strong>
-                <p style="font-size: 0.9rem;">${registroCivil}</p>
-                <strong style="font-family: 'Montserrat', sans-serif;">DNRUA:</strong>
-                <p style="font-size: 0.9rem;">${dnrua}</p>
-                <hr>
-                <p>Para más detalles, visita los sitios oficiales:</p>
-                <ul>
-                    <li><a href="https://www.argentina.gob.ar/interior/renaper" target="_blank" rel="noopener noreferrer">RENAPER (Registro Civil)</a></li>
-                    <li><a href="https://www.argentina.gob.ar/justicia/adopcion" target="_blank" rel="noopener noreferrer">DNRUA (Adopción)</a></li>
-                </ul>
-            `;
-            
             clearOptions();
             appendUserMessage("¿Dónde puedo encontrar más información?");
-            appendBotMessage(specialAnswer);
+
+            if (chatbotData['Organismos'] && chatbotData['Organismos'].length > 0) {
+                const registroCivil = chatbotData['Organismos'].find(q => q.question.includes('Registro Civil'))?.answer || 'Información no encontrada.';
+                const dnrua = chatbotData['Organismos'].find(q => q.question.includes('DNRUA'))?.answer || 'Información no encontrada.';
+                
+                // Este bloque de HTML ahora es seguro
+                const specialAnswer = `
+                    <div class="p-2">
+                        <p class="mb-2">¡Claro! Aquí tienes información sobre organismos oficiales:</p>
+                        <strong class="font-monospace">Registro Civil:</strong>
+                        <p class="small mb-2">${registroCivil}</p>
+                        <strong class="font-monospace">DNRUA:</strong>
+                        <p class="small mb-3">${dnrua}</p>
+                        <hr>
+                        <p class="mt-3">Para más detalles, visita los sitios oficiales:</p>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="https://www.argentina.gob.ar/interior/renaper" target="_blank" rel="noopener noreferrer">RENAPER (Registro Civil)</a></li>
+                            <li><a href="https://www.argentina.gob.ar/justicia/adopcion" target="_blank" rel="noopener noreferrer">DNRUA (Adopción)</a></li>
+                        </ul>
+                    </div>
+                `;
+                appendBotMessage(specialAnswer);
+            } else {
+                appendBotMessage("<p>Lo siento, la información sobre organismos no está disponible.</p>");
+            }
             
-            const backButton = createOptionButton('<< Volver al inicio', showWelcomeMessage);
+            const backButton = createOptionButton('<< Volver al inicio', () => {
+                showInitialGreeting();
+                showCategories();
+            });
             chatOptions.appendChild(backButton);
         }
 
@@ -273,6 +298,7 @@
             return button;
         }
 
+        // --- 4. Iniciar ---
         chatbotToggler.addEventListener('click', () => {
             chatbotContainer.classList.toggle('show');
             if (chatbotContainer.classList.contains('show') && chatMessages.childElementCount === 0) {
@@ -281,6 +307,5 @@
         });
     });
 </script>
-
 </body>
 </html>

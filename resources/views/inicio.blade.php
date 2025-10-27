@@ -53,7 +53,7 @@
 <div class="hero-full" style="background-image: url('{{ asset('images/hero-background.jpg') }}')">
     <div class="hero-content p-5">
         <div class="hero-tag">UN VÍNCULO ESENCIAL</div>
-        <h1 class="display-3 fw-bold">Promovemos el entendimiento del Derecho de Familia</h1>
+        <h1 class="display-3 fw-bold">Todo lo que necesitamos saber del derecho de la familia</h1>
         <p class="lead my-4 col-lg-8 mx-auto">
             Un recurso informativo que brinda asesoramiento claro sobre el proceso de registro, los derechos y deberes, en la conformación y desarrollo de los vínculos familiares.
         </p>
